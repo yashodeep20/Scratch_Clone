@@ -20,7 +20,7 @@
 
 .Motion {
   display: flex;
-  flex: 1;
+  flex: 0.2;
   flex-direction: column;
   justify-content: flex-start;
   align-items: center;
@@ -32,7 +32,7 @@
 .button {
   background-color: #007bff;
   padding: auto;
-  width: 220px;
+  width: 160px;
   height: 60px;
   margin-top: 40px;
   border-radius: 10px;
@@ -56,7 +56,7 @@
 }
 
 .Motion input {
-  width: 60px;
+  width: 40px;
 }
 
 
@@ -70,7 +70,7 @@
 }
 
 .Mid {
-  flex: 1;
+  flex: 0.2;
   display: flex;
   flex-direction: column;
   justify-content: flex-start;

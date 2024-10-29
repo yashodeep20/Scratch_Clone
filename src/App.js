@@ -1,30 +1,36 @@
 import './App.css';
 import './index.css';
 import React, { useState } from 'react';
+import '@fortawesome/fontawesome-free/css/all.min.css';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faComment } from '@fortawesome/free-solid-svg-icons';
 
 function App() {
-  const [selectedSprite, setSelectedSprite] = useState('');
+  const [selectedSpriteId, setSelectedSpriteId] = useState(null);
   const [sprites, setSprites] = useState([]);
-  const [moveDis, setmoveDis] = useState('');
-  const [rotationDR, setrotationDR] = useState('');
-  const [rotationDL, setrotationDL] = useState('');
-  const [spriteRoo, setspriteRoo] = useState('');
+  const [moveDis, setMoveDis] = useState('');
+  const [rotationDR, setRotationDR] = useState('');
+  const [rotationDL, setRotationDL] = useState('');
+  const [spriteRoo, setSpriteRoo] = useState(0);
   const [goToX, setGoToX] = useState('');
   const [goToY, setGoToY] = useState('');
-  const [spriteCoo, setspriteCoo] = useState({ x: 0, y: 0 });
+  const [spriteCoo, setSpriteCoo] = useState({ x: 0, y: 0 });
   const [actions, setActions] = useState([]);
+  const [sizeIncrement, setSizeIncrement] = useState(0);
+  const [message, setMessage] = useState(''); // State for displaying message
 
-  const previewWidth = 450;  
-  const previewHeight = 450; 
+  const previewWidth = 450;
+  const previewHeight = 450;
 
   const handleSpriteSelection = (event) => {
-    setSelectedSprite(event.target.value);
+    const selectedId = event.target.value;
+    setSelectedSpriteId(selectedId);
   };
 
   const addSprite = () => {
-    if (selectedSprite) {
-      setSprites([...sprites, { src: selectedSprite, id: Date.now() }]);
-      setSelectedSprite('');
+    if (selectedSpriteId) {
+      setSprites([...sprites, { src: selectedSpriteId, id: Date.now(), size: 100 }]);
+      setSelectedSpriteId(null);
     } else {
       alert('Please select a sprite.');
     }
@@ -35,7 +41,7 @@ function App() {
   };
 
   const dragOver = (e) => {
-    e.preventDefault(); 
+    e.preventDefault();
   };
 
   const handleDrop = (e) => {
@@ -43,24 +49,31 @@ function App() {
     setActions((prevActions) => [...prevActions, actionType]);
   };
 
-  const handleM = (e) => setmoveDis(Number(e.target.value));
-  const handleRoRich = (e) => setrotationDR(Number(e.target.value));
-  const handleRolc = (e) => setrotationDL(Number(e.target.value));
+  const handleM = (e) => setMoveDis(Number(e.target.value));
+  const handleRoRich = (e) => setRotationDR(Number(e.target.value));
+  const handleRolc = (e) => setRotationDL(Number(e.target.value));
   const handleGoToXC = (e) => setGoToX(Number(e.target.value));
   const handleGoToYC = (e) => setGoToY(Number(e.target.value));
+  const handleSizeIncrement = (e) => setSizeIncrement(Number(e.target.value));
 
-  
   const constrainCoordinates = (coords) => {
     return {
-      x: Math.max(0, Math.min(coords.x, previewWidth - 100)), 
-      y: Math.max(0, Math.min(coords.y, previewHeight - 100)) 
+      x: Math.max(0, Math.min(coords.x, previewWidth - 100)),
+      y: Math.max(0, Math.min(coords.y, previewHeight - 100))
     };
   };
 
   const goToRP = () => {
-    const randomX = Math.floor(Math.random() * (previewWidth - 100)); 
-    const randomY = Math.floor(Math.random() * (previewHeight - 100)); 
-    setspriteCoo({ x: randomX, y: randomY });
+    const randomX = Math.floor(Math.random() * (previewWidth - 100));
+    const randomY = Math.floor(Math.random() * (previewHeight - 100));
+    setSpriteCoo({ x: randomX, y: randomY });
+  };
+
+  const handleSpriteClick = (spriteId) => {
+    // Check if "onClick" action exists in actions, if yes then start actions
+    if (actions.includes('onClick')) {
+      startAction(); // Trigger actions only when "onClick" is included
+    }
   };
 
   const startAction = () => {
@@ -70,18 +83,32 @@ function App() {
           x: spriteCoo.x + moveDis,
           y: spriteCoo.y
         };
-        setspriteCoo(constrainCoordinates(newCoords));
+        setSpriteCoo(constrainCoordinates(newCoords));
       } else if (action === 'Turnr') {
-        setspriteRoo((prev) => prev + Number(rotationDR));
+        setSpriteRoo((prev) => prev + Number(rotationDR));
       } else if (action === 'Turnl') {
-        setspriteRoo((prev) => prev - Number(rotationDL));
+        setSpriteRoo((prev) => prev - Number(rotationDL));
       } else if (action === 'goto') {
         const newCoords = { x: Number(goToX), y: Number(goToY) };
-        setspriteCoo(constrainCoordinates(newCoords));
+        setSpriteCoo(constrainCoordinates(newCoords));
       } else if (action === 'random') {
         goToRP();
+      } else if (action === 'increaseSize') {
+        setSprites((prevSprites) =>
+          prevSprites.map((sprite) =>
+            sprite.id === Number(selectedSpriteId)
+              ? { ...sprite, size: sprite.size + sizeIncrement }
+              : sprite
+          )
+        );
+      } else if (action === 'sayHello') {
+        setMessage("Hello!"); // Display Hello message
       }
     });
+  };
+
+  const deleteAction = (index) => {
+    setActions((prevActions) => prevActions.filter((_, i) => i !== index));
   };
 
   return (
@@ -102,10 +129,16 @@ function App() {
             Turn Left by <input type="number" onChange={handleRolc} value={rotationDL} /> Degrees
           </button>
           <button className="button" draggable="true" onDragStart={(e) => dragStart(e, 'goto')}>
-            Go to X: <input type="number" onChange={handleGoToXC} value={goToX} /> Y: <input type="number" onChange={handleGoToYC} value={goToY} />
+            Go to X: <input type="number" onChange={handleGoToXC} value={goToX} /> Y: <input type="number" onChange={handleGoToYC} />
           </button>
           <button className="button" draggable="true" onDragStart={(e) => dragStart(e, 'random')}>
             Go to Random Position
+          </button>
+          <button className="button" draggable="true" onDragStart={(e) => dragStart(e, 'sayHello')}>
+            Say Hello!
+          </button>
+          <button className="button" draggable="true" onDragStart={(e) => dragStart(e, 'onClick')}>
+            When sprite is clicked
           </button>
         </div>
         <div className="Mid" onDragOver={dragOver} onDrop={handleDrop}>
@@ -119,13 +152,19 @@ function App() {
                 {action === 'Turnl' && `Turn Left by ${rotationDL} Degrees`}
                 {action === 'goto' && `Go to X: ${goToX} Y: ${goToY}`}
                 {action === 'random' && `Go to Random Position`}
+                {action === 'increaseSize' && `Increase size by ${sizeIncrement}`}
+                {action === 'sayHello' && `Say Hello!`}
+                {action === 'onClick' && `When sprite is clicked`}
+                <span className="delete-icon" onClick={() => deleteAction(index)}>
+                  <i className="fas fa-trash" style={{ marginLeft: '8px' }}></i>
+                </span>
               </button>
             ))}
           </div>
         </div>
         <div className="Preview">
           <h2>Preview Area</h2>
-          <select id="sprite-options" onChange={handleSpriteSelection} value={selectedSprite}>
+          <select id="sprite-options" onChange={handleSpriteSelection} value={selectedSpriteId || ''}>
             <option value="" disabled>Select a sprite</option>
             <option value="/Images/Cat.png">Cat</option>
             <option value="/Images/Dog.png">Dog</option>
@@ -143,15 +182,51 @@ function App() {
                 src={sprite.src}
                 alt="sprite"
                 style={{ 
-                  width: 'auto', 
-                  height: '100px', 
+                  width: `${sprite.size}px`,
+                  height: `${sprite.size}px`,
                   position: 'absolute', 
                   left: `${spriteCoo.x}px`,
                   top: `${spriteCoo.y}px`,  
                   transform: `rotate(${spriteRoo}deg)` 
                 }}
+                onClick={() => handleSpriteClick(sprite.id)} // Attach click handler here
               />
             ))}
+            {message && (
+              <div 
+                className="message" 
+                style={{ 
+                  position: 'absolute', 
+                  top: `${spriteCoo.y - 50}px`,  // Adjust to position above the sprite
+                  left: `${spriteCoo.x + 80}px`, // Adjust to center the message near the sprite
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'center', 
+                  fontSize: '20px',
+                  color: 'white'
+                }}
+              >
+                <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <FontAwesomeIcon 
+                    icon={faComment} 
+                    style={{ 
+                      color: "#63E6BE", 
+                      fontSize: '60px', 
+                      position: 'relative' 
+                    }} 
+                  />
+                  <span 
+                    style={{ 
+                      position: 'absolute', 
+                      color: 'black', 
+                      fontWeight: 'bold' 
+                    }}
+                  >
+                    {message}
+                  </span>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
